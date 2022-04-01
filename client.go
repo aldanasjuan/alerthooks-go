@@ -25,7 +25,7 @@ const (
 
 var api = "https://alerts.rubbey.app"
 var newRecordURL = api + "/records"
-
+var client = &fasthttp.Client{}
 var key string
 var signature []byte
 var validMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE"}
@@ -55,6 +55,20 @@ type NewRecordParams struct {
 	DueDate   int64                  `json:"due_date"`
 	Data      map[string]interface{} `json:"data"`
 	Recurring *Recurring             `json:"recurring"`
+}
+
+type UpdateRecordParams struct {
+	ID        string                 `json:"id"`
+	Method    *string                `json:"method,omitempty"`
+	Endpoint  *string                `json:"endpoint,omitempty"`
+	Type      *RecordType            `json:"type,omitempty"`
+	DueDate   *int64                 `json:"due_date,omitempty"`
+	Recurring *Recurring             `json:"recurring,omitempty"`
+	Data      map[string]interface{} `json:"data,omitempty"`
+}
+
+type CancelRecordParams struct {
+	ID string `json:"id"`
 }
 
 type Recurring struct {
@@ -96,20 +110,17 @@ func NewRecord(params *NewRecordParams) (*Record, error) {
 		return nil, err
 	}
 	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	defer req.Reset()
-	req.Header.SetMethod("POST")
+	req.Header.SetMethod(fasthttp.MethodPost)
 	req.SetRequestURI(newRecordURL)
 	req.Header.Set("Key", key)
 	req.Header.Set("Content-Type", "application/json")
-	req.SetBody(b)
-
-	c := fasthttp.Client{}
+	req.SetBodyRaw(b)
 	res := fasthttp.AcquireResponse()
 	defer fasthttp.ReleaseResponse(res)
 	defer res.Reset()
-
-	err = c.Do(req, res)
+	err = client.Do(req, res)
+	fasthttp.ReleaseRequest(req)
+	req.Reset()
 	if err != nil {
 		return nil, err
 	}
@@ -124,12 +135,57 @@ func NewRecord(params *NewRecordParams) (*Record, error) {
 	return record, nil
 }
 
-func UpdateRecord(params *NewRecordParams) error {
+func UpdateRecord(params *UpdateRecordParams) error {
+	if params.ID == "" {
+		return ErrMissingID
+	}
+	b, err := jsoniter.Marshal(params)
+	if err != nil {
+		return err
+	}
+	req := fasthttp.AcquireRequest()
+	req.Header.SetMethod(fasthttp.MethodPut)
+	req.SetRequestURI(newRecordURL + "/" + params.ID)
+	req.Header.Set("Key", key)
+	req.Header.Set("Content-Type", "application/json")
+	req.SetBodyRaw(b)
+	res := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(res)
+	defer res.Reset()
 
+	err = client.Do(req, res)
+	fasthttp.ReleaseRequest(req)
+	req.Reset()
+	if err != nil {
+		return err
+	}
+	if res.StatusCode() != 200 {
+		return fmt.Errorf(`status: %v error: %v`, res.StatusCode(), string(res.Body()))
+	}
 	return nil
 }
-func DeleteRecord(params *NewRecordParams) error {
+func CancelRecord(params *CancelRecordParams) error {
+	if params.ID == "" {
+		return ErrMissingID
+	}
+	req := fasthttp.AcquireRequest()
+	req.Header.SetMethod(fasthttp.MethodDelete)
+	req.SetRequestURI(newRecordURL + "/" + params.ID)
+	req.Header.Set("Key", key)
 
+	res := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(res)
+	defer res.Reset()
+
+	err := client.Do(req, res)
+	fasthttp.ReleaseRequest(req)
+	req.Reset()
+	if err != nil {
+		return err
+	}
+	if res.StatusCode() != 200 {
+		return fmt.Errorf(`status: %v error: %v`, res.StatusCode(), string(res.Body()))
+	}
 	return nil
 }
 

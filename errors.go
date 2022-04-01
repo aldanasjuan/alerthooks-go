@@ -3,6 +3,7 @@ package alerthooks
 import "errors"
 
 var (
+	ErrMissingID        = errors.New("params.ID must not be empty")
 	ErrInvalidURL       = errors.New("url has to be an absolute url, no localhost allowed, https only and the domain must exist")
 	ErrInvalidDueDate   = errors.New("the record due date must be in the future")
 	ErrInvalidMethod    = errors.New("the record method must be one of: GET, POST, PUT, PATCH, DELETE")

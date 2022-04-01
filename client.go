@@ -1,12 +1,14 @@
 package alerthooks
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net"
 	"net/url"
 	"strings"
 	"time"
 
+	"github.com/aldanasjuan/security"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/valyala/fasthttp"
 )
@@ -25,6 +27,7 @@ var api = "https://alerts.rubbey.app"
 var newRecordURL = api + "/records"
 
 var key string
+var signature []byte
 var validMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE"}
 var validTypes = []RecordType{RECORD_ONE_TIME, RECORD_RECURRING}
 
@@ -61,13 +64,26 @@ type Recurring struct {
 	Months  []int `json:"months,omitempty"`  //1-12
 }
 
-func SetKey(k string) {
-	key = k
+func SetKey(v string) {
+	key = v
+}
+func SetSignature(v string) error {
+	s, err := base64.RawURLEncoding.DecodeString(v)
+	if err != nil {
+		return err
+	}
+	signature = s
+	return nil
 }
 
 func SetAPI(s string) {
 	api = s
 	newRecordURL = api + "/records"
+}
+
+func ValidateSignature(v string) bool {
+	_, err := security.ValidateSignature(v, signature)
+	return err == nil
 }
 
 func NewRecord(params *NewRecordParams) (*Record, error) {

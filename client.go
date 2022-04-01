@@ -21,8 +21,8 @@ const (
 	RECORD_RECURRING RecordType   = "recurring"
 )
 
-const API = "https://alerts.rubbey.app"
-const NEW_RECORD_URL = API + "/records"
+var api = "https://alerts.rubbey.app"
+var newRecordURL = api + "/records"
 
 var key string
 var validMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE"}
@@ -65,6 +65,11 @@ func SetKey(k string) {
 	key = k
 }
 
+func SetAPI(s string) {
+	api = s
+	newRecordURL = api + "/records"
+}
+
 func NewRecord(params *NewRecordParams) (*Record, error) {
 	err := params.validate()
 	if err != nil {
@@ -78,7 +83,7 @@ func NewRecord(params *NewRecordParams) (*Record, error) {
 	defer fasthttp.ReleaseRequest(req)
 	defer req.Reset()
 	req.Header.SetMethod("POST")
-	req.SetRequestURI(NEW_RECORD_URL)
+	req.SetRequestURI(newRecordURL)
 	req.Header.Set("Key", key)
 	req.Header.Set("Content-Type", "application/json")
 	req.SetBody(b)

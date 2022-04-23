@@ -90,6 +90,14 @@ func SetSignature(v string) error {
 	return nil
 }
 
+func GetSignature() []byte {
+	return signature
+}
+
+func GetKey() string {
+	return key
+}
+
 func SetAPI(s string) {
 	api = s
 	newRecordURL = api + "/records"

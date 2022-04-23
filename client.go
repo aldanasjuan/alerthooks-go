@@ -209,40 +209,6 @@ func (r *NewRecordParams) validate() error {
 	return nil
 }
 
-func validateMethod(method string) bool {
-	method = strings.ToUpper(method)
-	for _, m := range validMethods {
-		if method == m {
-			return true
-		}
-	}
-	return false
-}
-func validateType(t RecordType) bool {
-	for _, tp := range validTypes {
-		if tp == t {
-			return true
-		}
-	}
-	return false
-}
-
-func validateEndpoint(endpoint string) bool {
-	u, err := url.Parse(endpoint)
-	if err != nil {
-		return false
-	}
-	if !u.IsAbs() || u.Scheme == "" || u.Host == "" {
-		return false
-	}
-
-	if strings.Contains(u.Host, "localhost") || net.ParseIP(u.Host) != nil || u.Port() != "" || u.Scheme != "https" {
-		return false
-	}
-	_, err = net.LookupHost(u.Host)
-	return err == nil
-}
-
 func (r *Recurring) validate() error {
 
 	if r == nil {
@@ -284,4 +250,38 @@ func (r *Recurring) validate() error {
 	}
 
 	return nil
+}
+
+func validateMethod(method string) bool {
+	method = strings.ToUpper(method)
+	for _, m := range validMethods {
+		if method == m {
+			return true
+		}
+	}
+	return false
+}
+func validateType(t RecordType) bool {
+	for _, tp := range validTypes {
+		if tp == t {
+			return true
+		}
+	}
+	return false
+}
+
+func validateEndpoint(endpoint string) bool {
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return false
+	}
+	if !u.IsAbs() || u.Scheme == "" || u.Host == "" {
+		return false
+	}
+
+	if strings.Contains(u.Host, "localhost") || net.ParseIP(u.Host) != nil || u.Port() != "" || u.Scheme != "https" {
+		return false
+	}
+	_, err = net.LookupHost(u.Host)
+	return err == nil
 }
